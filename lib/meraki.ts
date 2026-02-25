@@ -27,51 +27,68 @@ const ROLE_MAP: Record<string, ChampionRole> = {
 // ── Tier List ─────────────────────────────────────────────────────────────────
 export async function getMerakiTierList(): Promise<MerakiChampionStats[]> {
   try {
-    const res = await fetch(`${MERAKI_BASE}/champions.json`, {
-      next: { revalidate: 21600 }, // 6 hours
-    });
+    const [champsRes, ratesRes] = await Promise.all([
+      fetch(`${MERAKI_BASE}/champions.json`, { next: { revalidate: 21600 } }),
+      fetch(`${MERAKI_BASE}/championrates.json`, { next: { revalidate: 21600 } }),
+    ]);
 
-    if (!res.ok) throw new Error(`Meraki fetch failed: ${res.status}`);
-    const data: Record<string, MerakiRawChampion> = await res.json();
+    if (!champsRes.ok || !ratesRes.ok) throw new Error("Meraki fetch failed");
+
+    const champsData: Record<string, MerakiRawChampion> = await champsRes.json();
+    const ratesData: MerakiRatesData = await ratesRes.json();
 
     const result: MerakiChampionStats[] = [];
 
-    for (const [, champ] of Object.entries(data)) {
-      const roles = champ.stats?.roles ?? {};
+    for (const champ of Object.values(champsData)) {
+      const champRates = ratesData.data[String(champ.id)];
+      if (!champRates) continue;
 
-      for (const [roleKey, roleStats] of Object.entries(roles)) {
-        const role = ROLE_MAP[roleKey];
+      for (const position of champ.positions) {
+        const role = ROLE_MAP[position];
         if (!role) continue;
-        if (roleStats.games < 100) continue; // Skip insignificant sample sizes
-
-        const winRate = roleStats.games > 0 ? (roleStats.wins / roleStats.games) * 100 : 0;
-        const kda = roleStats.deaths > 0
-          ? (roleStats.kills + roleStats.assists) / roleStats.deaths
-          : roleStats.kills + roleStats.assists;
+        const playRate = champRates[position]?.playRate ?? 0;
+        if (playRate <= 0) continue;
 
         result.push({
-          championId: champ.id,
+          championId: champ.key,
           championName: champ.name,
           role,
-          tier: normalizeTier(roleStats.tier),
-          winRate: parseFloat(winRate.toFixed(2)),
-          pickRate: parseFloat((roleStats.playRate * 100).toFixed(2)),
-          banRate: parseFloat((roleStats.banRate * 100).toFixed(2)),
-          kda: parseFloat(kda.toFixed(2)),
-          averageKills: parseFloat(roleStats.kills.toFixed(1)),
-          averageDeaths: parseFloat(roleStats.deaths.toFixed(1)),
-          averageAssists: parseFloat(roleStats.assists.toFixed(1)),
-          games: roleStats.games,
+          tier: "B" as ChampionTier, // assigned below via percentile
+          winRate: 0,
+          pickRate: parseFloat(playRate.toFixed(2)),
+          banRate: 0,
+          kda: 0,
+          averageKills: 0,
+          averageDeaths: 0,
+          averageAssists: 0,
+          games: 0,
         });
       }
     }
 
-    // Sort: tier S→D, then by win rate descending
+    // Assign tier based on play rate percentile within each role
+    const allRoles: ChampionRole[] = ["top", "jungle", "mid", "adc", "support"];
+    for (const role of allRoles) {
+      const byRole = result
+        .filter(e => e.role === role)
+        .sort((a, b) => b.pickRate - a.pickRate);
+      const n = byRole.length;
+      byRole.forEach((entry, idx) => {
+        const pct = idx / n;
+        if (pct < 0.10) entry.tier = "S";
+        else if (pct < 0.25) entry.tier = "A";
+        else if (pct < 0.50) entry.tier = "B";
+        else if (pct < 0.75) entry.tier = "C";
+        else entry.tier = "D";
+      });
+    }
+
+    // Sort: tier S→D, then by pickRate descending
+    const tierOrder: Record<ChampionTier, number> = { S: 0, A: 1, B: 2, C: 3, D: 4 };
     return result.sort((a, b) => {
-      const tierOrder: Record<ChampionTier, number> = { S: 0, A: 1, B: 2, C: 3, D: 4 };
-      const tierDiff = (tierOrder[a.tier] ?? 5) - (tierOrder[b.tier] ?? 5);
-      if (tierDiff !== 0) return tierDiff;
-      return b.winRate - a.winRate;
+      const td = (tierOrder[a.tier] ?? 5) - (tierOrder[b.tier] ?? 5);
+      if (td !== 0) return td;
+      return b.pickRate - a.pickRate;
     });
   } catch {
     return [];
@@ -79,85 +96,13 @@ export async function getMerakiTierList(): Promise<MerakiChampionStats[]> {
 }
 
 // ── Champion Build ────────────────────────────────────────────────────────────
+// Meraki Analytics does not expose per-champion build data (items/runes/matchups).
+// This returns null until an alternative build data source is integrated.
 export async function getMerakiChampionBuild(
-  championId: string,
-  role?: ChampionRole
+  _championId: string,
+  _role?: ChampionRole
 ): Promise<MerakiChampionBuild | null> {
-  try {
-    const res = await fetch(
-      `${MERAKI_BASE}/champions/${championId}.json`,
-      { next: { revalidate: 21600 } }
-    );
-    if (!res.ok) return null;
-
-    const champ: MerakiRawChampion = await res.json();
-    const roles = champ.stats?.roles ?? {};
-
-    // Find the best role to show (requested role or highest play rate)
-    let targetRoleKey: string | null = null;
-    if (role) {
-      const reversed = Object.entries(ROLE_MAP).find(([, v]) => v === role)?.[0];
-      if (reversed && roles[reversed]) targetRoleKey = reversed;
-    }
-    if (!targetRoleKey) {
-      targetRoleKey = Object.entries(roles).sort(([, a], [, b]) => b.games - a.games)[0]?.[0] ?? null;
-    }
-    if (!targetRoleKey) return null;
-
-    const roleStats = roles[targetRoleKey];
-    const winRate = roleStats.games > 0 ? (roleStats.wins / roleStats.games) * 100 : 0;
-
-    // Extract items
-    const starters = roleStats.items?.starters?.ids ?? [];
-    const coreItems = roleStats.items?.coreBuilds?.[0]?.ids ?? [];
-    const boots = coreItems.find(id => isBoots(id)) ?? 0;
-    const core = coreItems.filter(id => !isBoots(id)).slice(0, 3);
-    const situational = roleStats.items?.coreBuilds?.[1]?.ids?.filter(id => !core.includes(id)).slice(0, 3) ?? [];
-
-    // Extract runes
-    const runePerks = roleStats.runes?.generalPerks?.rows ?? [];
-    const primaryRune = runePerks[0]?.[0] ?? 0;
-    const secondaryRunes = [
-      runePerks[1]?.[0],
-      runePerks[2]?.[0],
-      runePerks[3]?.[0],
-    ].filter(Boolean) as number[];
-
-    // Extract summoner spells
-    const topSummoners = roleStats.summoners?.[0];
-    const spells: [number, number] = [topSummoners?.spell1 ?? 4, topSummoners?.spell2 ?? 14];
-
-    return {
-      championId: champ.id,
-      championName: champ.name,
-      role: ROLE_MAP[targetRoleKey] ?? "mid",
-      winRate: parseFloat(winRate.toFixed(2)),
-      pickRate: parseFloat((roleStats.playRate * 100).toFixed(2)),
-      games: roleStats.games,
-      items: { starters, core, boots, situational },
-      runes: {
-        primaryStyle: roleStats.runes?.overallStyle ?? 0,
-        primaryRune,
-        secondaryRunes,
-        secondaryStyle: roleStats.runes?.subStyle ?? 0,
-        shards: [],
-      },
-      summonerSpells: spells,
-      skillOrder: ["Q", "W", "E", "R"], // Default — Meraki doesn't always provide this
-      matchups: {
-        best: (roleStats.best ?? []).slice(0, 5).map(m => ({
-          championId: m.championId,
-          winRate: m.games > 0 ? (m.wins / m.games) * 100 : 50,
-        })),
-        worst: (roleStats.worst ?? []).slice(0, 5).map(m => ({
-          championId: m.championId,
-          winRate: m.games > 0 ? (m.wins / m.games) * 100 : 50,
-        })),
-      },
-    };
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 // ── Counter-build suggestion ──────────────────────────────────────────────────
@@ -179,18 +124,3 @@ export async function getSuggestedBuild(
   return { build, reason };
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function normalizeTier(rawTier: string): ChampionTier {
-  if (!rawTier) return "C";
-  const t = rawTier.toUpperCase().charAt(0) as ChampionTier;
-  if (["S", "A", "B", "C", "D"].includes(t)) return t;
-  return "C";
-}
-
-const BOOTS_IDS = new Set([
-  1001, 3006, 3009, 3020, 3047, 3111, 3117, 3158,
-]);
-
-function isBoots(itemId: number): boolean {
-  return BOOTS_IDS.has(itemId);
-}

@@ -37,7 +37,7 @@ export default async function CampeonesPage() {
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-[#F0E6D3]">Tier List de Campeones</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Parche {patchVersion} · Fuente: Meraki Analytics · {enriched.length} entradas
+              Parche {patchVersion} · Tier basado en popularidad por rol · {enriched.length} campeones
             </p>
           </div>
 

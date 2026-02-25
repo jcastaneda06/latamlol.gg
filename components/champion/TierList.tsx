@@ -10,12 +10,20 @@ import type { TierListEntry, ChampionRole, ChampionTier } from "@/types/champion
 
 const ROLES: { value: ChampionRole | "all"; label: string }[] = [
   { value: "all", label: "Todos los roles" },
-  { value: "top", label: "Cima" },
+  { value: "top", label: "Top" },
   { value: "jungle", label: "Jungla" },
   { value: "mid", label: "Centro" },
   { value: "adc", label: "Tirador" },
   { value: "support", label: "Soporte" },
 ];
+
+const ROLE_LABEL: Record<ChampionRole, string> = {
+  top: "Top",
+  jungle: "Jungla",
+  mid: "Centro",
+  adc: "Tirador",
+  support: "Soporte",
+};
 
 const TIERS: { value: ChampionTier | "all"; label: string }[] = [
   { value: "all", label: "Todos" },
@@ -33,7 +41,7 @@ interface TierListProps {
 export function TierList({ entries }: TierListProps) {
   const [roleFilter, setRoleFilter] = useState<ChampionRole | "all">("all");
   const [tierFilter, setTierFilter] = useState<ChampionTier | "all">("all");
-  const [sortBy, setSortBy] = useState<"tier" | "winrate" | "pickrate" | "banrate">("tier");
+  const [sortBy, setSortBy] = useState<"tier" | "pickrate">("tier");
 
   const filtered = useMemo(() => {
     let result = entries;
@@ -41,9 +49,7 @@ export function TierList({ entries }: TierListProps) {
     if (roleFilter !== "all") result = result.filter(e => e.role === roleFilter);
     if (tierFilter !== "all") result = result.filter(e => e.tier === tierFilter);
 
-    if (sortBy === "winrate") return [...result].sort((a, b) => b.winRate - a.winRate);
     if (sortBy === "pickrate") return [...result].sort((a, b) => b.pickRate - a.pickRate);
-    if (sortBy === "banrate") return [...result].sort((a, b) => b.banRate - a.banRate);
 
     return result; // default: tier order (already sorted from server)
   }, [entries, roleFilter, tierFilter, sortBy]);
@@ -108,24 +114,11 @@ export function TierList({ entries }: TierListProps) {
               <th className="px-4 py-3 text-left">Tier</th>
               <th className="px-4 py-3 text-left">Campeón</th>
               <th
-                className={cn("px-3 py-3 text-right cursor-pointer hover:text-text-warm", sortBy === "winrate" && "text-gold")}
-                onClick={() => setSortBy("winrate")}
-              >
-                % Victoria
-              </th>
-              <th
-                className={cn("hidden px-3 py-3 text-right cursor-pointer hover:text-text-warm sm:table-cell", sortBy === "pickrate" && "text-gold")}
+                className={cn("px-3 py-3 text-right cursor-pointer hover:text-text-warm", sortBy === "pickrate" && "text-gold")}
                 onClick={() => setSortBy("pickrate")}
               >
                 % Selección
               </th>
-              <th
-                className={cn("hidden px-3 py-3 text-right cursor-pointer hover:text-text-warm md:table-cell", sortBy === "banrate" && "text-gold")}
-                onClick={() => setSortBy("banrate")}
-              >
-                % Baneo
-              </th>
-              <th className="hidden px-3 py-3 text-right sm:table-cell">KDA</th>
             </tr>
           </thead>
           <tbody>
@@ -133,7 +126,7 @@ export function TierList({ entries }: TierListProps) {
               <>
                 {/* Tier header row */}
                 <tr key={`tier-${tier}`} className="border-b border-border-subtle bg-surface-alt/50">
-                  <td colSpan={6} className="px-4 py-1.5">
+                  <td colSpan={3} className="px-4 py-1.5">
                     <span
                       className="text-xs font-black"
                       style={{ color: tierListColor(tier) }}
@@ -173,23 +166,11 @@ export function TierList({ entries }: TierListProps) {
                           unoptimized
                         />
                         <span className="font-medium text-text-warm text-sm">{entry.championName}</span>
-                        <span className="text-[11px] text-muted-foreground capitalize">{entry.role}</span>
+                        <span className="text-[11px] text-muted-foreground">{ROLE_LABEL[entry.role]}</span>
                       </Link>
                     </td>
-                    <td className={cn(
-                      "px-3 py-2.5 text-right text-sm font-semibold",
-                      entry.winRate >= 52 ? "text-win" : entry.winRate < 48 ? "text-loss" : "text-text-warm"
-                    )}>
-                      {formatPercent(entry.winRate)}
-                    </td>
-                    <td className="hidden px-3 py-2.5 text-right text-sm text-muted-foreground sm:table-cell">
+                    <td className="px-3 py-2.5 text-right text-sm text-muted-foreground">
                       {formatPercent(entry.pickRate)}
-                    </td>
-                    <td className="hidden px-3 py-2.5 text-right text-sm text-muted-foreground md:table-cell">
-                      {formatPercent(entry.banRate)}
-                    </td>
-                    <td className="hidden px-3 py-2.5 text-right text-sm text-text-warm sm:table-cell">
-                      {entry.kda.toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -197,7 +178,7 @@ export function TierList({ entries }: TierListProps) {
                 {/* Ad between tiers (only after S and A) */}
                 {(tier === "S" || tier === "A") && (
                   <tr key={`ad-${tier}`}>
-                    <td colSpan={6} className="px-4 py-3">
+                    <td colSpan={3} className="px-4 py-3">
                       <div className="flex justify-center">
                         <AdBanner
                           slot={process.env.NEXT_PUBLIC_AD_SLOT_LEADERBOARD ?? ""}

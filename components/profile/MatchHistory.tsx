@@ -6,6 +6,8 @@ import { MatchCard } from "@/components/profile/MatchCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdBanner } from "@/components/ads/AdBanner";
 import type { ProcessedMatch } from "@/types/match";
+import type { ItemTooltipInfo } from "@/components/ui/item-icon";
+import type { SpellTooltipInfo } from "@/components/profile/MatchCard";
 
 interface MatchHistoryProps {
   puuid: string;
@@ -33,8 +35,8 @@ async function fetchMatches(
 }
 
 async function fetchStaticData(): Promise<{
-  items: Record<string, string>;
-  spells: Record<number, string>;
+  items: Record<string, ItemTooltipInfo>;
+  spells: Record<number, SpellTooltipInfo>;
 }> {
   const res = await fetch("/api/ddragon/static");
   if (!res.ok) throw new Error("Error al cargar datos estáticos");
