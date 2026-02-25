@@ -1,0 +1,179 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "champions": "Campeones",
+    "ranking": "Clasificación",
+    "patches": "Parches",
+    "latam_north": "América Latina Norte",
+    "latam_south": "América Latina Sur"
+  },
+  "search": {
+    "placeholder": "Buscar invocador (Nombre#Tag)...",
+    "button": "Buscar",
+    "region_label": "Región",
+    "no_results": "No se encontraron resultados",
+    "searching": "Buscando...",
+    "recent": "Perfiles recientes",
+    "clear_recent": "Limpiar historial"
+  },
+  "profile": {
+    "level": "Nivel",
+    "not_found": "Invocador no encontrado",
+    "not_found_desc": "Verifica el nombre y la región ingresados.",
+    "unranked": "Sin clasificar",
+    "update": "Actualizar",
+    "last_updated": "Última actualización",
+    "tabs": {
+      "solo_duo": "Solo/Dúo",
+      "flex": "Flexible",
+      "aram": "ARAM",
+      "all": "Todo"
+    },
+    "ranked": {
+      "points": "PL",
+      "wins": "victorias",
+      "losses": "derrotas",
+      "winrate": "ratio de victorias",
+      "games": "partidas"
+    },
+    "match": {
+      "win": "Victoria",
+      "loss": "Derrota",
+      "remake": "Remake",
+      "kda": "KDA",
+      "cs": "CS",
+      "vision": "Visión",
+      "gold": "Oro",
+      "damage": "Daño",
+      "duration": "Duración",
+      "ago": "hace"
+    },
+    "champion_stats": {
+      "title": "Estadísticas por campeón",
+      "games": "Partidas",
+      "winrate": "% Victoria",
+      "kda": "KDA",
+      "avg_cs": "CS/min",
+      "avg_damage": "Daño Prom."
+    }
+  },
+  "live": {
+    "title": "Partida en vivo",
+    "not_in_game": "El invocador no está en partida",
+    "blue_team": "Equipo Azul",
+    "red_team": "Equipo Rojo",
+    "suggested_build": "Construcción Sugerida",
+    "suggested_reason": "Optimizada contra el equipo enemigo",
+    "bans": "Bans",
+    "rank": "Clasificación",
+    "winrate": "% Victoria"
+  },
+  "champions": {
+    "title": "Lista de Campeones",
+    "tier_list": "Tier List",
+    "all_roles": "Todos los roles",
+    "all_tiers": "Todos los tiers",
+    "columns": {
+      "tier": "Tier",
+      "champion": "Campeón",
+      "winrate": "% Victoria",
+      "pickrate": "% Selección",
+      "banrate": "% Baneo",
+      "kda": "KDA",
+      "games": "Partidas"
+    },
+    "roles": {
+      "top": "Cima",
+      "jungle": "Jungla",
+      "mid": "Centro",
+      "adc": "Tirador",
+      "support": "Soporte"
+    },
+    "tiers": {
+      "S": "S - Óptimo",
+      "A": "A - Fuerte",
+      "B": "B - Bueno",
+      "C": "C - Promedio",
+      "D": "D - Débil"
+    },
+    "detail": {
+      "overview": "Vista General",
+      "builds": "Construcciones",
+      "matchups": "Enfrentamientos",
+      "counters": "Contrarrestas",
+      "synergies": "Sinergias",
+      "base_stats": "Estadísticas Base",
+      "abilities": "Habilidades",
+      "passive": "Pasiva",
+      "recommended_build": "Construcción Recomendada",
+      "runes": "Runas",
+      "spells": "Hechizos de Invocador",
+      "items": "Objetos",
+      "starter": "Objetos iniciales",
+      "core": "Objetos principales",
+      "situational": "Objetos situacionales",
+      "boots": "Botas",
+      "skill_order": "Orden de habilidades"
+    }
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "challenger": "Desafiante",
+    "grandmaster": "Gran Maestro",
+    "master": "Maestro",
+    "rank": "Puesto",
+    "summoner": "Invocador",
+    "lp": "PL",
+    "winrate": "% Victoria",
+    "games": "Partidas",
+    "no_data": "No hay datos disponibles"
+  },
+  "patches": {
+    "title": "Notas de Parche",
+    "current": "Parche Actual",
+    "highlights": "Puntos Destacados",
+    "champion_changes": "Cambios de Campeones",
+    "item_changes": "Cambios de Objetos",
+    "system_changes": "Cambios del Sistema",
+    "read_more": "Leer más",
+    "buffed": "Mejorado",
+    "nerfed": "Debilitado",
+    "adjusted": "Ajustado"
+  },
+  "errors": {
+    "generic": "Algo salió mal. Intenta de nuevo.",
+    "rate_limit": "Demasiadas solicitudes. Espera un momento.",
+    "not_found": "No encontrado",
+    "api_down": "El servicio de Riot está temporalmente no disponible."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "load_more": "Cargar más",
+    "back": "Volver",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "ascending": "Ascendente",
+    "descending": "Descendente",
+    "patch": "Parche",
+    "season": "Temporada",
+    "queue": {
+      "ranked_solo": "Solo/Dúo Clasificatoria",
+      "ranked_flex": "Flexible Clasificatoria",
+      "aram": "ARAM",
+      "normal_draft": "Normal Borrador",
+      "normal_blind": "Normal Ciega",
+      "arena": "Arena",
+      "other": "Otro modo"
+    },
+    "ad_label": "Publicidad"
+  },
+  "footer": {
+    "disclaimer": "latamlol.gg no está afiliado con Riot Games. League of Legends y todos los materiales relacionados son propiedad de Riot Games, Inc.",
+    "links": {
+      "privacy": "Privacidad",
+      "terms": "Términos",
+      "contact": "Contacto"
+    }
+  }
+}
