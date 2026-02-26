@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMerakiTierList } from "@/lib/meraki";
 import { getAllChampions } from "@/lib/ddragon";
-import { getOrFetchWinrates } from "@/lib/champion-winrate";
+import { getOrFetchWinrates, type WinrateAggregate } from "@/lib/champion-winrate";
 import type { TierListEntry } from "@/types/champion";
 
 // Meraki championId (key) -> Riot championName (for lookup when they differ)
@@ -54,9 +54,9 @@ export async function GET(req: NextRequest) {
 
     const tierEntries = merakiData.status === "fulfilled" ? merakiData.value : [];
     const ddChampions = ddData.status === "fulfilled" ? ddData.value : {};
-    const wrMap =
+    const wrMap: WinrateAggregate =
       winrates.status === "fulfilled" && winrates.value && typeof winrates.value === "object"
-        ? winrates.value
+        ? (winrates.value as WinrateAggregate)
         : {};
 
     const enriched: TierListEntry[] = tierEntries.map((entry) => {

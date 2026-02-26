@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getMerakiTierList } from "@/lib/meraki";
 import { getAllChampions, getCurrentPatch } from "@/lib/ddragon";
-import { getOrFetchWinrates } from "@/lib/champion-winrate";
+import { getOrFetchWinrates, type WinrateAggregate } from "@/lib/champion-winrate";
 import { TierList } from "@/components/champion/TierList";
 import { AdBanner } from "@/components/ads/AdBanner";
 import type { TierListEntry } from "@/types/champion";
@@ -40,9 +40,9 @@ export default async function CampeonesPage() {
   const tierEntries = merakiData.status === "fulfilled" ? merakiData.value : [];
   const ddChampions = ddData.status === "fulfilled" ? ddData.value : {};
   const patchVersion = patch.status === "fulfilled" ? patch.value : "15.x";
-  const wrMap =
+  const wrMap: WinrateAggregate =
     winrates.status === "fulfilled" && winrates.value && typeof winrates.value === "object"
-      ? winrates.value
+      ? (winrates.value as WinrateAggregate)
       : {};
 
   // Merge DDragon + winrate data into tier entries

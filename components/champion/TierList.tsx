@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { Fragment, useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
@@ -263,9 +263,9 @@ export function TierList({ entries: initialEntries }: TierListProps) {
           </thead>
           <tbody>
             {Object.entries(grouped).map(([tier, tierEntries], tierIdx) => (
-              <>
+              <Fragment key={`group-${tier}`}>
                 {/* Tier header row */}
-                <tr key={`tier-${tier}`} className="border-b border-border-subtle bg-surface-alt/50">
+                <tr className="border-b border-border-subtle bg-surface-alt/50">
                   <td colSpan={colSpan} className="px-4 py-1.5">
                     <span
                       className="text-xs font-black"
@@ -332,7 +332,7 @@ export function TierList({ entries: initialEntries }: TierListProps) {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
