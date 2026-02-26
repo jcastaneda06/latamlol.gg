@@ -79,13 +79,98 @@ export function MatchDetailsTable({ matchId, region, puuid }: MatchDetailsTableP
             const team100 = participants.filter(p => p.teamId === 100);
             const team200 = participants.filter(p => p.teamId === 200);
 
-            const TeamTable = ({ team, sideLabel }: { team: ScoredParticipant[]; sideLabel: string }) => (
-              <div className="min-w-0 flex-1 overflow-x-auto">
+            const team100Meta = data.info.teams.find(t => t.teamId === 100);
+            const team200Meta = data.info.teams.find(t => t.teamId === 200);
+
+            const getObjectiveKills = (
+              team: MatchDTO["info"]["teams"][number] | undefined,
+              objectiveKey: string
+            ) => team?.objectives?.[objectiveKey]?.kills ?? 0;
+
+            const baseObjectiveItems = [
+              { key: "tower", icon: "T", label: "Torres" },
+              { key: "inhibitor", icon: "I", label: "Inhibidores" },
+              { key: "dragon", icon: "D", label: "Dragones" },
+              { key: "baron", icon: "B", label: "Barones" },
+            ];
+            const extraObjectiveItems = [
+              { key: "riftHerald", icon: "H", label: "Heraldos" },
+              { key: "horde", icon: "V", label: "Voidgrubs" },
+              { key: "atakhan", icon: "A", label: "Atakhan" },
+            ].filter(
+              item =>
+                getObjectiveKills(team100Meta, item.key) > 0 ||
+                getObjectiveKills(team200Meta, item.key) > 0
+            );
+            const objectiveItems = [...baseObjectiveItems, ...extraObjectiveItems];
+
+            const team100Gold = team100.reduce((sum, p) => sum + p.goldEarned, 0);
+            const team200Gold = team200.reduce((sum, p) => sum + p.goldEarned, 0);
+            const team100Damage = team100.reduce((sum, p) => sum + p.totalDamageDealtToChampions, 0);
+            const team200Damage = team200.reduce((sum, p) => sum + p.totalDamageDealtToChampions, 0);
+            const ObjectiveIcons = ({
+              teamMeta,
+              teamGold,
+              teamDamage,
+            }: {
+              teamMeta: MatchDTO["info"]["teams"][number] | undefined;
+              teamGold: number;
+              teamDamage: number;
+            }) => (
+              <div className="flex flex-wrap items-center justify-end gap-1">
+                {objectiveItems.map(item => (
+                  <span
+                    key={item.key}
+                    className="inline-flex items-center gap-1.5 rounded bg-surface px-2 py-1 text-xs text-text-warm"
+                    title={item.label}
+                  >
+                    <span className="inline-flex size-5 items-center justify-center rounded-full border border-border-subtle text-[10px] font-bold text-muted-foreground">
+                      {item.icon}
+                    </span>
+                    {getObjectiveKills(teamMeta, item.key)}
+                  </span>
+                ))}
+                <span
+                  className="inline-flex items-center gap-1.5 rounded bg-surface px-2 py-1 text-xs text-text-warm"
+                  title="Oro total"
+                >
+                  <span className="inline-flex size-5 items-center justify-center rounded-full border border-border-subtle text-[10px] font-bold text-muted-foreground">
+                    G
+                  </span>
+                  {teamGold.toLocaleString("es-MX")}
+                </span>
+                <span
+                  className="inline-flex items-center gap-1.5 rounded bg-surface px-2 py-1 text-xs text-text-warm"
+                  title="Daño total"
+                >
+                  <span className="inline-flex size-5 items-center justify-center rounded-full border border-border-subtle text-[10px] font-bold text-muted-foreground">
+                    DMG
+                  </span>
+                  {teamDamage.toLocaleString("es-MX")}
+                </span>
+              </div>
+            );
+
+            const TeamTable = ({
+              team,
+              sideLabel,
+              teamMeta,
+              teamGold,
+              teamDamage,
+            }: {
+              team: ScoredParticipant[];
+              sideLabel: string;
+              teamMeta: MatchDTO["info"]["teams"][number] | undefined;
+              teamGold: number;
+              teamDamage: number;
+            }) => (
+              <div className="min-w-0 overflow-x-auto rounded-lg border border-border-subtle">
                 <div className={cn(
-                  "px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider border-b",
+                  "flex items-center justify-between gap-2 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider border-b",
                   team[0]?.win ? "bg-win/10 text-win border-win/30" : "bg-loss/10 text-loss border-loss/30"
                 )}>
-                  {sideLabel} — {team[0]?.win ? "Victoria" : "Derrota"}
+                  <span>{sideLabel} — {team[0]?.win ? "Victoria" : "Derrota"}</span>
+                  <ObjectiveIcons teamMeta={teamMeta} teamGold={teamGold} teamDamage={teamDamage} />
                 </div>
                 <table className="w-full text-left text-xs">
                   <thead>
@@ -175,10 +260,24 @@ export function MatchDetailsTable({ matchId, region, puuid }: MatchDetailsTableP
                             {formatKDA(p.kills, p.deaths, p.assists)}
                           </td>
                           <td className="hidden px-2 py-1.5 text-right sm:table-cell">
-                            {p.totalMinionsKilled + p.neutralMinionsKilled}
-                            <span className="text-muted-foreground">
-                              {" "}({(durationMin > 0 ? ((p.totalMinionsKilled + p.neutralMinionsKilled) / durationMin).toFixed(1) : "0")})
-                            </span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span>{p.totalMinionsKilled + p.neutralMinionsKilled}</span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                <div className="space-y-1">
+                                  <p>
+                                    <span className="font-semibold text-text-warm">CS/min:</span>{" "}
+                                    {durationMin > 0
+                                      ? ((p.totalMinionsKilled + p.neutralMinionsKilled) / durationMin).toFixed(1)
+                                      : "0.0"}
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    CS = súbditos y monstruos neutrales eliminados.
+                                  </p>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
                           </td>
                           <td className="hidden px-2 py-1.5 text-right sm:table-cell text-gold">
                             {p.goldEarned.toLocaleString("es-MX")}
@@ -200,9 +299,21 @@ export function MatchDetailsTable({ matchId, region, puuid }: MatchDetailsTableP
 
             return (
               <div className="space-y-3">
-                <div className="flex flex-col gap-3 rounded-lg border border-border-subtle overflow-hidden lg:flex-row">
-                  <TeamTable team={team100} sideLabel="Equipo Azul" />
-                  <TeamTable team={team200} sideLabel="Equipo Rojo" />
+                <div className="flex flex-col gap-3">
+                  <TeamTable
+                    team={team100}
+                    sideLabel="Equipo Azul"
+                    teamMeta={team100Meta}
+                    teamGold={team100Gold}
+                    teamDamage={team100Damage}
+                  />
+                  <TeamTable
+                    team={team200}
+                    sideLabel="Equipo Rojo"
+                    teamMeta={team200Meta}
+                    teamGold={team200Gold}
+                    teamDamage={team200Damage}
+                  />
                 </div>
                 <div className="text-[10px] text-muted-foreground">
                   Duración: {formatDuration(gameDuration)}
