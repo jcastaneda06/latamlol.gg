@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMatchIds, getMatch } from "@/lib/riot";
-import { getCachedMatch, setCachedMatch } from "@/lib/supabase";
+import { getMatchIds, getMatch, getRankedByPuuid } from "@/lib/riot";
+import { getCachedMatch, setCachedMatch, getRankSnapshots } from "@/lib/supabase";
+import { computeLPDeltas } from "@/lib/lp-delta";
 import type { ProcessedMatch } from "@/types/match";
 import type { ParticipantDTO } from "@/types/match";
 
 export const runtime = "nodejs";
 
-function processParticipant(p: ParticipantDTO, matchId: string, gameDuration: number, queueId: number): ProcessedMatch {
+function processParticipant(
+  p: ParticipantDTO,
+  matchId: string,
+  gameDuration: number,
+  queueId: number,
+  gameCreation: number,
+  gameEndTimestamp?: number
+): ProcessedMatch {
+  const endTs = gameEndTimestamp ?? gameCreation + gameDuration * 1000;
   return {
     matchId,
     champion: p.championName,
@@ -28,7 +37,8 @@ function processParticipant(p: ParticipantDTO, matchId: string, gameDuration: nu
     gameMode: "",
     queueId,
     gameDuration,
-    gameCreation: 0, // filled below
+    gameCreation,
+    gameEndTimestamp: endTs,
     teamPosition: p.teamPosition || p.individualPosition,
     champLevel: p.champLevel,
     primaryRune: p.perks?.styles?.[0]?.selections?.[0]?.perk ?? 0,
@@ -71,10 +81,45 @@ export async function GET(req: NextRequest) {
       const participant = match.info.participants.find(p => p.puuid === puuid);
       if (!participant) continue;
 
-      const p = processParticipant(participant, match.metadata.matchId, match.info.gameDuration, match.info.queueId);
-      p.gameCreation = match.info.gameCreation;
+      const p = processParticipant(
+      participant,
+      match.metadata.matchId,
+      match.info.gameDuration,
+      match.info.queueId,
+      match.info.gameCreation,
+      match.info.gameEndTimestamp
+    );
       p.gameMode = match.info.gameMode;
       processed.push(p);
+    }
+
+    const ranked = await getRankedByPuuid(puuid, region).catch(() => []);
+    const snapshots = await getRankSnapshots(puuid, region);
+    const currentRankByQueue: Record<string, { tier: string; rank: string; leaguePoints: number; wins: number; losses: number }> = {};
+    for (const e of ranked) {
+      currentRankByQueue[e.queueType] = {
+        tier: e.tier,
+        rank: e.rank ?? "I",
+        leaguePoints: e.leaguePoints,
+        wins: e.wins,
+        losses: e.losses,
+      };
+    }
+
+    const lpMap = computeLPDeltas(
+      processed.map(m => ({
+        matchId: m.matchId,
+        queueId: m.queueId,
+        win: m.win,
+        gameEndTimestamp: m.gameEndTimestamp ?? m.gameCreation + m.gameDuration * 1000,
+      })),
+      snapshots,
+      currentRankByQueue
+    );
+
+    for (const m of processed) {
+      const delta = lpMap.get(m.matchId);
+      if (delta !== undefined) m.lpDelta = delta;
     }
 
     return NextResponse.json(processed);

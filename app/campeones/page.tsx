@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
 import { getMerakiTierList } from "@/lib/meraki";
 import { getAllChampions, getCurrentPatch } from "@/lib/ddragon";
+import { getOrFetchWinrates } from "@/lib/champion-winrate";
 import { TierList } from "@/components/champion/TierList";
 import { AdBanner } from "@/components/ads/AdBanner";
 import type { TierListEntry } from "@/types/champion";
+
+const MERAKI_TO_RIOT_ALIAS: Record<string, string> = {
+  MonkeyKing: "Wukong",
+};
 
 export const metadata: Metadata = {
   title: "Tier List de Campeones — latamlol.gg",
@@ -12,22 +17,48 @@ export const metadata: Metadata = {
 
 export const revalidate = 21600; // 6 hours
 
+function computeWinRate(wins: number, losses: number): number {
+  const total = wins + losses;
+  return total > 0 ? Math.round((wins / total) * 1000) / 10 : 0;
+}
+
 export default async function CampeonesPage() {
-  const [merakiData, ddData, patch] = await Promise.allSettled([
+  const winratePromise = Promise.race([
+    getOrFetchWinrates("la1"),
+    new Promise<Record<string, never>>((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), 6000)
+    ),
+  ]).catch(() => ({}));
+
+  const [merakiData, ddData, patch, winrates] = await Promise.allSettled([
     getMerakiTierList(),
     getAllChampions(),
     getCurrentPatch(),
+    winratePromise,
   ]);
 
   const tierEntries = merakiData.status === "fulfilled" ? merakiData.value : [];
   const ddChampions = ddData.status === "fulfilled" ? ddData.value : {};
   const patchVersion = patch.status === "fulfilled" ? patch.value : "15.x";
+  const wrMap =
+    winrates.status === "fulfilled" && winrates.value && typeof winrates.value === "object"
+      ? winrates.value
+      : {};
 
-  // Merge DDragon data into tier entries
-  const enriched: TierListEntry[] = tierEntries.map(entry => ({
-    ...entry,
-    championData: ddChampions[entry.championId],
-  }));
+  // Merge DDragon + winrate data into tier entries
+  const enriched: TierListEntry[] = tierEntries.map(entry => {
+    const lookupKey = MERAKI_TO_RIOT_ALIAS[entry.championId] ?? entry.championId;
+    const wrEntry = wrMap[lookupKey]?.[entry.role];
+    const wins = wrEntry?.wins ?? 0;
+    const losses = wrEntry?.losses ?? 0;
+    const hasRealData = wins + losses > 0;
+    return {
+      ...entry,
+      winRate: hasRealData ? computeWinRate(wins, losses) : entry.winRate,
+      games: hasRealData ? wins + losses : entry.games,
+      championData: ddChampions[entry.championId],
+    };
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 lg:px-6">

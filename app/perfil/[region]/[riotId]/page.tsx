@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getAccountByRiotId } from "@/lib/riot";
 import { getSummonerByPuuid, getRankedByPuuid } from "@/lib/riot";
+import { indexSummonerFromProfile, insertRankSnapshot } from "@/lib/supabase";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { RankedCard } from "@/components/profile/RankedCard";
 import { MatchHistory } from "@/components/profile/MatchHistory";
@@ -45,6 +46,25 @@ export default async function ProfilePage({ params }: Props) {
       getSummonerByPuuid(account.puuid, region),
       getRankedByPuuid(account.puuid, region),
     ]);
+    const riotIdFull = `${account.gameName}#${account.tagLine}`;
+    indexSummonerFromProfile(
+      account.puuid,
+      region,
+      riotIdFull,
+      summoner.profileIconId
+    ).catch(() => {});
+    for (const e of ranked) {
+      if (e.queueType === "RANKED_SOLO_5x5" || e.queueType === "RANKED_FLEX_SR") {
+        insertRankSnapshot(account.puuid, region, {
+          queueType: e.queueType,
+          tier: e.tier,
+          rank: e.rank ?? "I",
+          leaguePoints: e.leaguePoints,
+          wins: e.wins,
+          losses: e.losses,
+        }).catch(() => {});
+      }
+    }
   } catch {
     notFound();
   }

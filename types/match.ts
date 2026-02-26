@@ -207,8 +207,11 @@ export interface ProcessedMatch {
   queueId: number;
   gameDuration: number;
   gameCreation: number;
+  gameEndTimestamp?: number;
   teamPosition: string;
   champLevel: number;
   primaryRune: number;
   perks: ParticipantDTO["perks"];
+  /** LP gained (+) or lost (-) for ranked matches; computed from rank snapshots */
+  lpDelta?: number;
 }

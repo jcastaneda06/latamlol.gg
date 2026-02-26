@@ -124,7 +124,7 @@ export function MatchDetailsTable({ matchId, region, puuid }: MatchDetailsTableP
                                   p.tag === "DESTACADO" && "text-teal"
                                 )}
                               >
-                                {p.tag}
+                                {p.tag === "DESTACADO" ? "DES" : p.tag}
                               </span>
                             ) : (
                               p.rank

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { cn, formatKDA, calcKDA, kdaColor, formatDuration, formatCS, getQueueShort, timeAgo } from "@/lib/utils";
+import { cn, formatKDA, calcKDA, kdaColor, formatDuration, formatCS, getQueueShort, timeAgo, isRankedQueue } from "@/lib/utils";
 import { MatchDetailsTable } from "@/components/profile/MatchDetailsTable";
 import { championIconUrl, spellIconUrlById } from "@/lib/ddragon";
 import { ItemIcon, FormattedDescription, type ItemTooltipInfo } from "@/components/ui/item-icon";
@@ -70,6 +70,21 @@ export function MatchCard({ match, region, puuid, itemInfo, spellInfo }: MatchCa
         </p>
         <p className="text-[10px] text-muted-foreground">{getQueueShort(match.queueId)}</p>
       </div>
+
+      {/* LP gain/loss (only when we have snapshot-derived data) */}
+      {isRankedQueue(match.queueId) && !isRemake && match.lpDelta !== undefined && (
+        <div
+          className={cn(
+            "flex shrink-0 items-center gap-0.5 text-sm font-semibold tabular-nums",
+            match.win ? "text-win" : "text-loss"
+          )}
+          title="PL calculado a partir de tu historial de clasificación"
+        >
+          <span aria-hidden>{match.win ? "▲" : "▼"}</span>
+          <span>{match.lpDelta >= 0 ? `+${match.lpDelta}` : `${match.lpDelta}`}</span>
+          <span className="text-[10px] font-normal text-muted-foreground">LP</span>
+        </div>
+      )}
 
       {/* Champion */}
       <div className="relative shrink-0">

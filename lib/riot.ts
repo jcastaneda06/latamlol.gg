@@ -162,3 +162,75 @@ export async function getMasterLeaderboard(region: string, queue = "RANKED_SOLO_
     queue: queue as RiotAPITypes.QUEUE,
   });
 }
+
+// Search summoners by name prefix (from Challenger/GM/Master leaderboards)
+export type SummonerSearchResult = {
+  riot_id: string;
+  region: string;
+  profile_icon_id: number;
+};
+
+export async function searchSummonersByPrefix(
+  region: string,
+  prefix: string,
+  limit = 10
+): Promise<SummonerSearchResult[]> {
+  const q = prefix.trim().toLowerCase();
+  if (!q.length) return [];
+
+  try {
+    const rAPI = createRiotClient();
+    const platform = (region.toLowerCase() || "la1").replace(/^na$/, "na1").replace(/^la$/, "la1") as RiotAPITypes.LoLRegion;
+
+    const [challenger, grandmaster, master] = await Promise.allSettled([
+      rAPI.league.getChallengerByQueue({ region: platform, queue: "RANKED_SOLO_5x5" as RiotAPITypes.QUEUE }),
+      rAPI.league.getGrandmasterByQueue({ region: platform, queue: "RANKED_SOLO_5x5" as RiotAPITypes.QUEUE }),
+      rAPI.league.getMasterByQueue({ region: platform, queue: "RANKED_SOLO_5x5" as RiotAPITypes.QUEUE }),
+    ]);
+
+    const toEntries = (result: PromiseSettledResult<unknown>) => {
+      if (result.status !== "fulfilled" || !result.value) return [];
+      const list = result.value as { entries?: Array<{ summonerId: string; summonerName: string }> };
+      return list.entries ?? [];
+    };
+
+    const allEntries = [
+      ...toEntries(challenger),
+      ...toEntries(grandmaster),
+      ...toEntries(master),
+    ];
+
+    const matches = allEntries.filter(e => {
+      const name = (e as { summonerName?: string }).summonerName ?? (e as { summoner_name?: string }).summoner_name ?? "";
+      return String(name).toLowerCase().startsWith(q);
+    }).slice(0, limit);
+
+    const results: SummonerSearchResult[] = [];
+    for (const entry of matches) {
+      try {
+        const summonerId = (entry as { summonerId: string }).summonerId ?? (entry as { summoner_id?: string }).summoner_id;
+        if (!summonerId) continue;
+
+        const summoner = await getSummonerById(summonerId, region);
+        const account = await getAccountByPuuid(summoner.puuid, region);
+        const riotId = `${account.gameName}#${account.tagLine}`;
+        results.push({
+          riot_id: riotId,
+          region: region.toLowerCase().replace(/^na$/, "na1").replace(/^la$/, "la1"),
+          profile_icon_id: summoner.profileIconId,
+        });
+        await new Promise(r => setTimeout(r, 80));
+      } catch (err) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[searchSummonersByPrefix] Failed to resolve entry:", (entry as { summonerName?: string }).summonerName, err);
+        }
+      }
+    }
+    return results;
+  } catch (err) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[searchSummonersByPrefix] Error:", err);
+    }
+    return [];
+  }
+}

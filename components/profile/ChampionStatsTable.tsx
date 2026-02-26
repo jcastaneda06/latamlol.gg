@@ -1,10 +1,19 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import { cn, calcKDA, winRateColor, calcWinRate } from "@/lib/utils";
 import { championIconUrl } from "@/lib/ddragon";
 import type { ProcessedMatch } from "@/types/match";
+
+type QueueFilter = "all" | "420" | "440" | "other";
+
+const QUEUE_FILTERS: { value: QueueFilter; label: string }[] = [
+  { value: "all", label: "Todas" },
+  { value: "420", label: "Solo/Dúo" },
+  { value: "440", label: "Flex" },
+  { value: "other", label: "Normal" },
+];
 
 interface ChampionStat {
   championId: number;
@@ -23,10 +32,19 @@ interface ChampionStatsTableProps {
 }
 
 export function ChampionStatsTable({ matches }: ChampionStatsTableProps) {
+  const [queueFilter, setQueueFilter] = useState<QueueFilter>("all");
+
+  const filteredMatches = useMemo(() => {
+    if (queueFilter === "all") return matches;
+    if (queueFilter === "420") return matches.filter(m => m.queueId === 420);
+    if (queueFilter === "440") return matches.filter(m => m.queueId === 440);
+    return matches.filter(m => m.queueId !== 420 && m.queueId !== 440);
+  }, [matches, queueFilter]);
+
   const stats = useMemo(() => {
     const map = new Map<string, ChampionStat>();
 
-    for (const m of matches) {
+    for (const m of filteredMatches) {
       const key = m.champion;
       const existing = map.get(key) ?? {
         championId: m.championId,
@@ -55,7 +73,7 @@ export function ChampionStatsTable({ matches }: ChampionStatsTableProps) {
     return Array.from(map.values())
       .sort((a, b) => b.games - a.games)
       .slice(0, 15);
-  }, [matches]);
+  }, [filteredMatches]);
 
   if (stats.length === 0) {
     return (
@@ -66,7 +84,26 @@ export function ChampionStatsTable({ matches }: ChampionStatsTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border-subtle bg-surface">
+    <div className="space-y-4">
+      {/* Queue / Rank filter */}
+      <div className="flex flex-wrap gap-1">
+        {QUEUE_FILTERS.map(f => (
+          <button
+            key={f.value}
+            onClick={() => setQueueFilter(f.value)}
+            className={cn(
+              "rounded px-3 py-1.5 text-xs font-medium transition-colors border",
+              queueFilter === f.value
+                ? "border-gold text-gold bg-surface-alt"
+                : "border-border-subtle text-muted-foreground hover:border-gold/50 hover:text-text-warm"
+            )}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-border-subtle bg-surface">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border-subtle text-xs text-muted-foreground">
@@ -128,6 +165,7 @@ export function ChampionStatsTable({ matches }: ChampionStatsTableProps) {
           })}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }
