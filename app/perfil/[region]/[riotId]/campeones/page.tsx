@@ -4,6 +4,7 @@ import { getAccountByRiotId, getMatchIds, getMatch } from "@/lib/riot";
 import { getCachedMatch, setCachedMatch } from "@/lib/supabase";
 import { ChampionStatsTable } from "@/components/profile/ChampionStatsTable";
 import type { ProcessedMatch, ParticipantDTO } from "@/types/match";
+import { absoluteUrl } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ region: string; riotId: string }>;
@@ -48,8 +49,20 @@ function processParticipant(p: ParticipantDTO, matchId: string, gameDuration: nu
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { riotId, region } = await params;
   const { gameName } = parseRiotId(riotId);
+  const canonical = `/perfil/${region}/${riotId}/campeones`;
+  const title = `${gameName} - Estadisticas por Campeon`;
+  const description = `Rendimiento reciente de ${gameName} por campeon: winrate, KDA, CS y picks.`;
   return {
-    title: `${gameName} — Estadísticas por Campeón`,
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      url: absoluteUrl(canonical),
+    },
   };
 }
 

@@ -8,6 +8,7 @@ import { BuildDisplay } from "@/components/champion/BuildDisplay";
 import { RuneDisplay } from "@/components/champion/RuneDisplay";
 import { AdBanner } from "@/components/ads/AdBanner";
 import type { ChampionRole } from "@/types/champion";
+import { absoluteUrl } from "@/lib/seo";
 
 const ROLES: { value: ChampionRole; label: string }[] = [
   { value: "top", label: "Cima" },
@@ -24,7 +25,20 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { championId } = await params;
-  return { title: `${championId} — Construcciones` };
+  const title = `${championId} - Construcciones`;
+  const description = `Builds, runas, hechizos y orden de habilidades de ${championId} para el meta actual.`;
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/campeones/${championId}/construcciones`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: absoluteUrl(`/campeones/${championId}/construcciones`),
+    },
+  };
 }
 
 export const revalidate = 21600;

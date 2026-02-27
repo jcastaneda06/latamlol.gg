@@ -8,6 +8,7 @@ import { BuildDisplay } from "@/components/champion/BuildDisplay";
 import { RuneDisplay } from "@/components/champion/RuneDisplay";
 import { AdBanner } from "@/components/ads/AdBanner";
 import { formatPercent } from "@/lib/utils";
+import { absoluteUrl } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ championId: string }>;
@@ -15,9 +16,19 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { championId } = await params;
+  const title = `${championId} - Estadisticas y Construccion`;
+  const description = `Tier, construcciones, runas y estadisticas de ${championId} en el meta actual de League of Legends.`;
   return {
-    title: `${championId} — Estadísticas y Construcción`,
-    description: `Tier, construcciones, runas y estadísticas de ${championId} en el meta actual de League of Legends.`,
+    title,
+    description,
+    alternates: {
+      canonical: `/campeones/${championId}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: absoluteUrl(`/campeones/${championId}`),
+    },
   };
 }
 

@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Providers } from "@/components/Providers";
 import { AdBanner } from "@/components/ads/AdBanner";
 import { getCurrentPatch } from "@/lib/ddragon";
+import { absoluteUrl, getSiteUrl } from "@/lib/seo";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -15,18 +16,49 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "latamlol.gg — Estadísticas de League of Legends LATAM",
+    default: "Estadísticas de League of Legends LATAM",
     template: "%s | latamlol.gg",
   },
   description:
     "Estadísticas de League of Legends para jugadores de LATAM (LA1/LA2). Perfiles, historial de partidas, tier lists, construcciones y parches en español.",
   keywords: ["League of Legends", "LATAM", "estadísticas", "LoL", "LA1", "LA2", "builds", "tier list", "latamlol"],
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   openGraph: {
-    title: "latamlol.gg",
-    description: "Estadísticas de League of Legends para Latinoamérica",
+    title: "Estadísticas de League of Legends LATAM",
+    description: "Perfiles, historial de partidas, tier list, builds y parches de LoL para LATAM.",
+    url: absoluteUrl("/"),
+    siteName: "latamlol.gg",
     locale: "es_MX",
     type: "website",
+    images: [
+      {
+        url: absoluteUrl("/opengraph-image"),
+        width: 1200,
+        height: 630,
+        alt: "latamlol.gg - Estadísticas de League of Legends LATAM",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "latamlol.gg",
+    description: "Estadísticas de League of Legends para Latinoamérica.",
+    images: [absoluteUrl("/twitter-image")],
   },
 };
 
@@ -40,6 +72,25 @@ export default async function RootLayout({
   return (
     <html lang="es" className="dark">
       <head>
+        <Script
+          id="website-structured-data"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "latamlol.gg",
+              url: absoluteUrl("/"),
+              inLanguage: "es-MX",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: `${absoluteUrl("/")}?q={search_term_string}`,
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
         {/* Google AdSense */}
         {pubId && (
           <Script

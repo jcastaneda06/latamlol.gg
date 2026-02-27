@@ -5,14 +5,23 @@ import { getOrFetchWinrates, type WinrateAggregate } from "@/lib/champion-winrat
 import { TierList } from "@/components/champion/TierList";
 import { AdBanner } from "@/components/ads/AdBanner";
 import type { TierListEntry } from "@/types/champion";
+import { absoluteUrl } from "@/lib/seo";
 
 const MERAKI_TO_RIOT_ALIAS: Record<string, string> = {
   MonkeyKing: "Wukong",
 };
 
 export const metadata: Metadata = {
-  title: "Tier List de Campeones — latamlol.gg",
+  title: "Tier List de Campeones",
   description: "Lista completa de campeones de League of Legends clasificados por tier y rol para el meta actual.",
+  alternates: {
+    canonical: "/campeones",
+  },
+  openGraph: {
+    title: "Tier List de Campeones",
+    description: "Tier list actualizada de campeones por rol para LATAM.",
+    url: absoluteUrl("/campeones"),
+  },
 };
 
 export const revalidate = 21600; // 6 hours

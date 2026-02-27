@@ -9,6 +9,7 @@ import { RankedCard } from "@/components/profile/RankedCard";
 import { MatchHistory } from "@/components/profile/MatchHistory";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdBanner } from "@/components/ads/AdBanner";
+import { absoluteUrl } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ region: string; riotId: string }>;
@@ -23,9 +24,20 @@ function parseRiotId(encoded: string): { gameName: string; tagLine: string } {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { riotId, region } = await params;
   const { gameName } = parseRiotId(riotId);
+  const canonical = `/perfil/${region}/${riotId}`;
+  const title = `${gameName} - Perfil ${region.toUpperCase()}`;
+  const description = `Estadisticas de ${gameName} en ${region.toUpperCase()} - historial de partidas, clasificacion y mas.`;
   return {
-    title: `${gameName} — Perfil ${region.toUpperCase()}`,
-    description: `Estadísticas de ${gameName} en ${region.toUpperCase()} — historial de partidas, clasificación y más.`,
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      url: absoluteUrl(canonical),
+    },
   };
 }
 

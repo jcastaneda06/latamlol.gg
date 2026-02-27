@@ -6,6 +6,7 @@ import { profileIconUrl, tierIconUrl } from "@/lib/ddragon";
 import { tierColor, calcWinRate, winRateColor } from "@/lib/utils";
 import { AdBanner } from "@/components/ads/AdBanner";
 import type { LeagueItemDTO } from "@/types/riot";
+import { absoluteUrl } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ region: string }>;
@@ -15,8 +16,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { region } = await params;
   const label = region === "la1" ? "LA Norte" : region === "la2" ? "LA Sur" : region.toUpperCase();
   return {
-    title: `Clasificación ${label} — latamlol.gg`,
+    title: `Clasificación ${label}`,
     description: `Top jugadores de League of Legends en ${label}. Desafiante, Gran Maestro y Maestro.`,
+    alternates: {
+      canonical: `/clasificacion/${region}`,
+    },
+    openGraph: {
+      title: `Clasificación ${label}`,
+      description: `Ranking de jugadores de LoL en ${label}.`,
+      url: absoluteUrl(`/clasificacion/${region}`),
+    },
   };
 }
 

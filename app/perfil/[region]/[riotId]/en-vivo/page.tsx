@@ -4,6 +4,7 @@ import { getAccountByRiotId, getSummonerByPuuid, getLiveGame, getRankedByPuuid }
 import { getChampionNameById } from "@/lib/ddragon";
 import { getSuggestedBuild } from "@/lib/meraki";
 import { LiveGameView } from "@/components/live/LiveGameView";
+import { absoluteUrl } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ region: string; riotId: string }>;
@@ -16,9 +17,27 @@ function parseRiotId(encoded: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { riotId } = await params;
+  const { riotId, region } = await params;
   const { gameName } = parseRiotId(riotId);
-  return { title: `${gameName} — Partida en Vivo` };
+  const canonical = `/perfil/${region}/${riotId}/en-vivo`;
+  const title = `${gameName} - Partida en Vivo`;
+  const description = `Partida en vivo de ${gameName}: composiciones, rangos y recomendaciones en tiempo real.`;
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      url: absoluteUrl(canonical),
+    },
+    robots: {
+      index: false,
+      follow: true,
+    },
+  };
 }
 
 export default async function LiveGamePage({ params }: Props) {

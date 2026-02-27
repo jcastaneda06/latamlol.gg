@@ -4,6 +4,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { scrapePatchDetail } from "@/lib/scraper";
 import { getCachedPatchNotes, setCachedPatchNotes } from "@/lib/supabase";
 import { AdBanner } from "@/components/ads/AdBanner";
+import { absoluteUrl } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ version: string }>;
@@ -11,9 +12,19 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { version } = await params;
+  const title = `Parche ${version} - Notas de Actualizacion`;
+  const description = `Notas completas del parche ${version} de League of Legends en espanol.`;
   return {
-    title: `Parche ${version} — Notas de Actualización`,
-    description: `Notas completas del Parche ${version} de League of Legends en español.`,
+    title,
+    description,
+    alternates: {
+      canonical: `/parches/${version}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: absoluteUrl(`/parches/${version}`),
+    },
   };
 }
 

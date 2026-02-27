@@ -4,10 +4,19 @@ import { Calendar, ChevronRight } from "lucide-react";
 import { scrapePatchList } from "@/lib/scraper";
 import { getCachedPatchNotes, setCachedPatchNotes } from "@/lib/supabase";
 import { AdBanner } from "@/components/ads/AdBanner";
+import { absoluteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Notas de Parche — latamlol.gg",
+  title: "Notas de Parche",
   description: "Notas de todos los parches de League of Legends en español.",
+  alternates: {
+    canonical: "/parches",
+  },
+  openGraph: {
+    title: "Notas de Parche de LoL",
+    description: "Historico de notas de parche de League of Legends en espanol.",
+    url: absoluteUrl("/parches"),
+  },
 };
 
 export const revalidate = 86400; // 24 hours
