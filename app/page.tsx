@@ -9,7 +9,7 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero section */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-visible">
         <div className="absolute inset-0 bg-gradient-to-br from-[#C89B3C08] via-transparent to-[#0BC4B908]" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold to-transparent opacity-30" />
 
