@@ -88,15 +88,15 @@ export function MatchDetailsTable({ matchId, region, puuid }: MatchDetailsTableP
             ) => team?.objectives?.[objectiveKey]?.kills ?? 0;
 
             const baseObjectiveItems = [
-              { key: "tower", icon: "T", label: "Torres" },
-              { key: "inhibitor", icon: "I", label: "Inhibidores" },
-              { key: "dragon", icon: "D", label: "Dragones" },
-              { key: "baron", icon: "B", label: "Barones" },
+              { key: "tower", icon: "T", label: "Torres", iconSrc: "/icons/Turrets.svg" },
+              { key: "inhibitor", icon: "I", label: "Inhibidores", iconSrc: "/icons/Inhibitor.svg" },
+              { key: "dragon", icon: "D", label: "Dragones", iconSrc: "/icons/Drakes.svg" },
+              { key: "baron", icon: "B", label: "Barones", iconSrc: "/icons/Barons.svg" },
             ];
             const extraObjectiveItems = [
-              { key: "riftHerald", icon: "H", label: "Heraldos" },
-              { key: "horde", icon: "V", label: "Voidgrubs" },
-              { key: "atakhan", icon: "A", label: "Atakhan" },
+              { key: "riftHerald", icon: "H", label: "Heraldos", iconSrc: "/icons/Herald.svg" },
+              { key: "horde", icon: "V", label: "Voidgrubs", iconSrc: "/icons/Voidgrubs.svg" },
+              { key: "atakhan", icon: "A", label: "Atakhan", iconSrc: null as string | null },
             ].filter(
               item =>
                 getObjectiveKills(team100Meta, item.key) > 0 ||
@@ -119,35 +119,52 @@ export function MatchDetailsTable({ matchId, region, puuid }: MatchDetailsTableP
             }) => (
               <div className="flex flex-wrap items-center justify-end gap-1">
                 {objectiveItems.map(item => (
-                  <span
-                    key={item.key}
-                    className="inline-flex items-center gap-1.5 rounded bg-surface px-2 py-1 text-xs text-text-warm"
-                    title={item.label}
-                  >
-                    <span className="inline-flex size-5 items-center justify-center rounded-full border border-border-subtle text-[10px] font-bold text-muted-foreground">
-                      {item.icon}
-                    </span>
-                    {getObjectiveKills(teamMeta, item.key)}
-                  </span>
+                  <Tooltip key={item.key}>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex cursor-default items-center gap-1 rounded bg-surface px-1.5 py-1 text-xs text-text-warm">
+                        {item.iconSrc ? (
+                          <span className="relative inline-flex size-4 shrink-0 items-center justify-center">
+                            <Image src={item.iconSrc} alt={item.label} fill className="object-contain opacity-70" />
+                          </span>
+                        ) : (
+                          <span className="inline-flex size-4 items-center justify-center text-[10px] font-bold text-muted-foreground">
+                            {item.icon}
+                          </span>
+                        )}
+                        {getObjectiveKills(teamMeta, item.key)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <span className="text-xs">{item.label}: {getObjectiveKills(teamMeta, item.key)}</span>
+                    </TooltipContent>
+                  </Tooltip>
                 ))}
-                <span
-                  className="inline-flex items-center gap-1.5 rounded bg-surface px-2 py-1 text-xs text-text-warm"
-                  title="Oro total"
-                >
-                  <span className="inline-flex size-5 items-center justify-center rounded-full border border-border-subtle text-[10px] font-bold text-muted-foreground">
-                    G
-                  </span>
-                  {teamGold.toLocaleString("es-MX")}
-                </span>
-                <span
-                  className="inline-flex items-center gap-1.5 rounded bg-surface px-2 py-1 text-xs text-text-warm"
-                  title="Daño total"
-                >
-                  <span className="inline-flex size-5 items-center justify-center rounded-full border border-border-subtle text-[10px] font-bold text-muted-foreground">
-                    DMG
-                  </span>
-                  {teamDamage.toLocaleString("es-MX")}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex cursor-default items-center gap-1 rounded bg-surface px-1.5 py-1 text-xs text-text-warm">
+                      <span className="relative inline-flex size-4 shrink-0 items-center justify-center">
+                        <Image src="/icons/Gold.svg" alt="Oro" fill className="object-contain opacity-70" />
+                      </span>
+                      {teamGold.toLocaleString("es-MX")}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <span className="text-xs">Oro total: {teamGold.toLocaleString("es-MX")}</span>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex cursor-default items-center gap-1 rounded bg-surface px-1.5 py-1 text-xs text-text-warm">
+                      <span className="relative inline-flex size-4 shrink-0 items-center justify-center">
+                        <Image src="/icons/Damage.svg" alt="Daño" fill className="object-contain opacity-70" />
+                      </span>
+                      {teamDamage.toLocaleString("es-MX")}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    <span className="text-xs">Daño total a campeones: {teamDamage.toLocaleString("es-MX")}</span>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             );
 
